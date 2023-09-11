@@ -3,11 +3,11 @@ Create CRUD endpoints to handle categories
 
 ## CRUD REST API endpoints
 * C - create categories and sub categories
-`/categories/new` - `POST` - create a new category
-`/categories/<category-title>/sub/new` - `POST` - Create a new sub category for an existing category
+`/categories` - `POST` - create a new category
+`/categories/<category-title>/sub` - `POST` - Create a new sub category for an existing category
 
 * R - read/get categories and sub categories
-`/categories/all`- `GET` - get all categories and their sub categories
+`/categories`- `GET` - get all categories and their sub categories
 `/categories/<category-title>` - `GET` - get a category and its sub categories
 
 * U - update categories and sub categories
