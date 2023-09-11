@@ -46,15 +46,13 @@ def get_create_categories():
         payload = {
             'category': category.title().strip(),
             'sub_category': sub_category,
-            'created_at': datetime.now(),
-            'category_id': category.lower().replace(' ', '_') + str(randint(100, 999))
+            'created_at': datetime.now()
         }
         category = categories.insert_one(payload)
         if category.acknowledged:
             return jsonify({
                 'message': 'Category created successfully',
-                'status': True,
-                'created_id': payload['category_id']
+                'status': True
             }), 201
         else:
             return jsonify({
@@ -74,10 +72,11 @@ def get_create_categories():
         
 
 @app.route(
-    '/categories/<string:category_id>',
+    '/categories/<string:category_name>',
     methods=['GET', 'PUT', 'DELETE']
 )
-def RUD_categories(category_id):
+def RUD_categories(category_name):
+    # The name RUD is gotten from CRUD just without a C
     if request.method == 'PUT':
         return 'under construction'
     
@@ -85,31 +84,32 @@ def RUD_categories(category_id):
         return 'under construction'
     
     category = categories.find_one(
-        {'category_id': category_id}, {'_id': 0}
+        {'category': category_name.title().replace('_', ' ')},
+        {'_id': 0}
     )
     if category is None:
         return jsonify({
-            'message': f"Category with category_id {category_id} not found",
+            'message': f"Category {category_name} not found",
             'status': False
         }), 404
         
     return jsonify({
-        'message': f"Fetched category ({category_id}) successfully",
+        'message': f"Fetched category ({category_name}) successfully",
         'status': True,
         'data': category
     })
 
 
-@app.route('/categories/<string:category_id>/sub', methods=['POST'])
-def create_subcategory(category_id):
+@app.route('/categories/<string:category_name>/sub', methods=['POST'])
+def create_subcategory(category_name):
     return 'under construction'
 
 
 @app.route(
-    '/categories/<string:category_id>/sub/<string:subcategory_id>',
+    '/categories/<string:category_name>/sub/<string:subcategory_name>',
     methods=['PUT', 'DELETE']
 )
-def UD_subcategory(category_id, subcategory_id):
+def UD_subcategory(category_name, subcategory_name):
     return 'under construction'
 
 
