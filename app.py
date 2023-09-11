@@ -81,7 +81,19 @@ def RUD_categories(category_name):
         return 'under construction'
     
     if request.method == 'DELETE':
-        return 'under construction'
+        category = categories.delete_one({
+            'category': category_name.title().replace('_', ' ')
+        })
+        if category.deleted_count:
+            return jsonify({
+                'message': f"Category {category_name} deleted successfully",
+                'status': True
+            }), 200
+        else:
+            return jsonify({
+                'message': f"Category {category_name} not found",
+                'status': False
+            }), 404
     
     category = categories.find_one(
         {'category': category_name.title().replace('_', ' ')},
