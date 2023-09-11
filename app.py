@@ -23,17 +23,17 @@ def get_create_categories():
         - Create category if requirements are met
         - Notify user on the status of the operation
         """
-        title = request.json.get('title', None)
-        sub_categories = request.json.get('sub-categories', None)
+        category = request.json.get('category', None)
+        sub_category = request.json.get('sub_category', None)
 
-        if not title:
+        if not category:
             return jsonify({
                 'message': 'Required payload ommited - no title was given',
                 'status': False
             }), 400
         
         find_category = categories.find_one(
-            {'title': title.strip().title()},
+            {'category': category.strip().title()},
             {'_id': 1}
         ) 
         if find_category:
@@ -43,8 +43,8 @@ def get_create_categories():
             }), 409
         
         payload = {
-            'title': title.title().strip(),
-            'sub_categories': sub_categories,
+            'category': category.title().strip(),
+            'sub_category': sub_category,
             'created_at': datetime.now()
         }
         category = categories.insert_one(payload)
