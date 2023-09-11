@@ -25,7 +25,7 @@ try:
     else:
         uri = "mongodb://127.0.0.1:27017"
 except Exception as e:
-    print(f'Error connection to Database: {e}')
+    print(f'Error in connection to Database: {e}')
 
 client = MongoClient(uri)
 db = client['test']
@@ -98,8 +98,45 @@ def get_create_categories():
 def RUD_categories(category_name):
     # The name RUD is gotten from CRUD just without a C
     if request.method == 'PUT':
-        return 'under construction'
-    
+        category = request.json.get('category', None)
+        sub_category = request.json.get('sub_category', None)
+        
+        if not sub_category:
+            return jsonify({
+                'message': 'Required payload ommited - no sub_category was given',
+                'status': False
+            }), 400
+        
+        new_sub_category = categories.update_one(
+             {'category': category_name.title().replace('_', ' ')},
+             {'$set': {
+                  'sub_category': sub_category
+             }}
+        )
+        if not new_sub_category.matched_count:
+            return jsonify({
+                'message': f"Category {category_name} not found",
+                'status': False
+            }), 400
+
+        if category:
+            update_category = categories.update_one(
+                {'category': category_name.title().replace('_', ' ')},
+                {'$set': {
+                    'category': category
+                }}
+            )
+            if not update_category.matched_count:
+                return jsonify({
+                    'message': f"Category {category_name} not found",
+                    'status': False
+                }),
+            
+        return jsonify({
+            'message': f"Category {category_name} updated successfully",
+            'status': True
+        }), 200
+
     if request.method == 'DELETE':
         category = categories.delete_one({
             'category': category_name.title().replace('_', ' ')
@@ -149,7 +186,7 @@ def UD_subcategory(category_name, subcategory_name):
 def index():
     return jsonify({
         'message': 'CRUD APIs for tencowry categories'
-    })
+    }), 200
 
 
 if __name__ == '__main__':
