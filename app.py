@@ -1,13 +1,33 @@
+import os
+
 from flask import Flask, jsonify, request
 from pymongo import MongoClient
 from datetime import datetime
-from random import randint
+from dotenv import load_dotenv
+from flask_cors import CORS
 
 
 app = Flask(__name__)
 
-# MongoDB configuration and instantiation
-client = MongoClient('mongodb://localhost:27017')
+load_dotenv()
+CORS()
+
+try:
+    # If we are working in a production environment (deployed state)
+    # the database to be used will be the mongodb atlas database
+    # else the local mongodb instance will be used
+    app_status = os.environ.get('APP_STATUS')
+    if app_status == 'production':
+        db_username = os.environ['DATABASE_USER']
+        db_passwd = os.environ['DATABASE_PASSWORD']
+        db_url = os.environ['DATABASE_URL']
+        uri = f"mongodb+srv://{db_username}:{db_passwd}@{db_url}"
+    else:
+        uri = "mongodb://127.0.0.1:27017"
+except Exception as e:
+    print(f'Error connection to Database: {e}')
+
+client = MongoClient(uri)
 db = client['test']
 categories = db['categories']
 
@@ -133,4 +153,7 @@ def index():
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+	if os.environ.get('APP_STATUS') == 'production':
+		app.run()
+	else:
+		app.run(debug=True)
