@@ -1,4 +1,4 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 from pymongo import MongoClient
 
 
@@ -12,8 +12,50 @@ categories = db['categories']
 
 @app.route('/categories', methods=['POST', 'GET'])
 def get_create_categories():
-    return 'under construction'
+    if request.method == 'POST':
+        """
+        Workflow
+        - Gets the payload
+        - Return errors if required payloads are ommited
+        - Return errors if category already exists
+        - Create category if requirements are met
+        - Notify user on the status of the operation
+        """
+        title = request.json.get('title', None)
+        subcategory = request.json.get('sub-categories', None)
 
+        if not title:
+            return jsonify({
+                'message': 'Required payload ommited - no title was given',
+                'status': False
+            }), 400
+        
+        find_category = categories.find_one(
+            {'title': title.strip().title()},
+            {'_id': 1}
+        ) 
+        if find_category:
+            return jsonify({
+                'message': 'Category already exists',
+                'status': False
+            }), 409
+        
+        payload = {
+            'title': title.title().strip(),
+            'subcategories': subcategory
+        }
+        category = categories.insert_one(payload)
+        if category.acknowledged:
+            return jsonify({
+                'message': 'Category created successfully',
+                'status': True
+            }), 201
+        else:
+            return jsonify({
+                'message': 'An unexpected error occured',
+                'status': False
+            }), 500
+        
 
 @app.route(
     '/categories/<string:category_title>',
