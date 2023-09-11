@@ -1,5 +1,6 @@
 from flask import Flask, jsonify, request
 from pymongo import MongoClient
+from datetime import datetime
 
 
 app = Flask(__name__)
@@ -12,6 +13,7 @@ categories = db['categories']
 
 @app.route('/categories', methods=['POST', 'GET'])
 def get_create_categories():
+    # Post request
     if request.method == 'POST':
         """
         Workflow
@@ -22,7 +24,7 @@ def get_create_categories():
         - Notify user on the status of the operation
         """
         title = request.json.get('title', None)
-        subcategory = request.json.get('sub-categories', None)
+        sub_categories = request.json.get('sub-categories', None)
 
         if not title:
             return jsonify({
@@ -42,7 +44,8 @@ def get_create_categories():
         
         payload = {
             'title': title.title().strip(),
-            'subcategories': subcategory
+            'sub_categories': sub_categories,
+            'created_at': datetime.now()
         }
         category = categories.insert_one(payload)
         if category.acknowledged:
@@ -55,6 +58,14 @@ def get_create_categories():
                 'message': 'An unexpected error occured',
                 'status': False
             }), 500
+        
+    # Get request
+    all = categories.find({}, {'_id': 0})
+    return jsonify({
+        'message': 'Fetched categories successfully',
+        'status': True,
+        'data': list(all)
+    })
         
 
 @app.route(
