@@ -1,6 +1,7 @@
 from flask import Flask, jsonify, request
 from pymongo import MongoClient
 from datetime import datetime
+from random import randint
 
 
 app = Flask(__name__)
@@ -45,13 +46,15 @@ def get_create_categories():
         payload = {
             'category': category.title().strip(),
             'sub_category': sub_category,
-            'created_at': datetime.now()
+            'created_at': datetime.now(),
+            'category_id': category.lower().replace(' ', '_') + str(randint(100, 999))
         }
         category = categories.insert_one(payload)
         if category.acknowledged:
             return jsonify({
                 'message': 'Category created successfully',
-                'status': True
+                'status': True,
+                'created_id': payload['category_id']
             }), 201
         else:
             return jsonify({
@@ -61,31 +64,52 @@ def get_create_categories():
         
     # Get request
     all = categories.find({}, {'_id': 0})
+    all = list(all)
     return jsonify({
         'message': 'Fetched categories successfully',
         'status': True,
-        'data': list(all)
+        'count': len(all),
+        'data': all
     })
         
 
 @app.route(
-    '/categories/<string:category_title>',
+    '/categories/<string:category_id>',
     methods=['GET', 'PUT', 'DELETE']
 )
-def RUD_categories(category_title):
-    return 'under construction'
+def RUD_categories(category_id):
+    if request.method == 'PUT':
+        return 'under construction'
+    
+    if request.method == 'DELETE':
+        return 'under construction'
+    
+    category = categories.find_one(
+        {'category_id': category_id}, {'_id': 0}
+    )
+    if category is None:
+        return jsonify({
+            'message': f"Category with category_id {category_id} not found",
+            'status': False
+        }), 404
+        
+    return jsonify({
+        'message': f"Fetched category ({category_id}) successfully",
+        'status': True,
+        'data': category
+    })
 
 
-@app.route('/categories/<string:category_title>/sub', methods=['POST'])
-def create_subcategory(category_title):
+@app.route('/categories/<string:category_id>/sub', methods=['POST'])
+def create_subcategory(category_id):
     return 'under construction'
 
 
 @app.route(
-    '/categories/<string:category_title>/sub/<string:subcategory_title>',
+    '/categories/<string:category_id>/sub/<string:subcategory_id>',
     methods=['PUT', 'DELETE']
 )
-def UD_subcategory(category_title, subcategory_title):
+def UD_subcategory(category_id, subcategory_id):
     return 'under construction'
 
 
