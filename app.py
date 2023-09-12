@@ -91,10 +91,8 @@ def get_create_categories():
     })
         
 
-@app.route(
-    '/categories/<string:category_name>',
-    methods=['GET', 'PUT', 'DELETE']
-)
+@app.route('/categories/<string:category_name>',
+        methods=['GET', 'PUT', 'DELETE'])
 def RUD_categories(category_name):
     # The name RUD is gotten from CRUD just without a C
     if request.method == 'PUT':
@@ -169,7 +167,8 @@ def RUD_categories(category_name):
     })
 
 
-@app.route('/categories/<string:category_name>/sub', methods=['POST'])
+@app.route('/categories/<string:category_name>/sub',
+        methods=['POST', 'DELETE'])
 def create_subcategory(category_name):
     sub_category = request.json.get('sub_category', None)
     if sub_category is None:
@@ -178,28 +177,67 @@ def create_subcategory(category_name):
             'status': False
         }), 400
     
-    if type(sub_category) is not str:
-        return jsonify({
-            'message': 'The value of sub_category should be a string',
-            'status': False
-        }), 400
-    
-    sub = categories.update_one(
-        {'category': category_name.title().replace('_', ' ')},
-        {'$push': {
-            'sub_category': sub_category
-        }}
-    )
-    if not sub.matched_count:
-        return jsonify({
-            'message': f"Category {category_name} not found",
-            'status': False
-        }), 404
+    if request.method == 'POST':        
+        if type(sub_category) is not str:
+            return jsonify({
+                'message': 'The value of sub_category should be a string',
+                'status': False
+            }), 400
+        
+        sub = categories.update_one(
+            {'category': category_name.title().replace('_', ' ')},
+            {'$push': {
+                'sub_category': sub_category.title()
+            }}
+        )
+        if not sub.matched_count:
+            return jsonify({
+                'message': f"Category {category_name} not found",
+                'status': False
+            }), 404
 
-    return jsonify({
-        'message': 'Subcategory created successfully',
-        'status': False
-    }), 200
+        return jsonify({
+            'message': 'Subcategory created successfully',
+            'status': True
+        }), 200
+    
+    if request.method == 'DELETE':
+        if type(sub_category) is not list:
+            return jsonify({
+                'message': 'The value of sub_category should be a list/array',
+                'status': False
+            }), 400
+        
+        success_deletes = []
+        failed_deletes = []
+        for i in sub_category:
+            sub = categories.update_one(
+                {'category': category_name.title().replace('_', ' ')},
+                {'$pull': {
+                    'sub_category': i.title()
+                }}
+            )
+            if not sub.matched_count:
+                return jsonify({
+                    'message': f"Category {category_name} not found",
+                    'status': False
+                }), 404
+            
+            if sub.modified_count:
+                success_deletes.append(i)
+            else:
+                failed_deletes.append(i)
+
+        fail_message = f'Subcategories not deleted {failed_deletes}'
+        fail_status_code = 207
+        success_message = f'Deleted subcategories {success_deletes}'
+        return jsonify({
+            'message': fail_message if len(fail_message) else success_message,
+            'failure': len(failed_deletes),
+            'success': len(success_deletes),
+            'total': len(sub_category)
+        }), fail_status_code if len(failed_deletes) else 200
+
 
 
 @app.route(
