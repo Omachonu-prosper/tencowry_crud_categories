@@ -49,14 +49,14 @@ def get_create_categories():
 
         if not category:
             return jsonify({
-                'message': 'Required payload ommited - no title was given',
+                'message': 'Required payload ommited',
                 'status': False
             }), 400
         
         find_category = categories.find_one(
             {'category': category.strip().title()},
             {'_id': 1}
-        ) 
+        )
         if find_category:
             return jsonify({
                 'message': 'Category already exists',
@@ -171,7 +171,35 @@ def RUD_categories(category_name):
 
 @app.route('/categories/<string:category_name>/sub', methods=['POST'])
 def create_subcategory(category_name):
-    return 'under construction'
+    sub_category = request.json.get('sub_category', None)
+    if sub_category is None:
+        return jsonify({
+            'message': 'Required payload ommited',
+            'status': False
+        }), 400
+    
+    if type(sub_category) is not str:
+        return jsonify({
+            'message': 'The value of sub_category should be a string',
+            'status': False
+        }), 400
+    
+    sub = categories.update_one(
+        {'category': category_name.title().replace('_', ' ')},
+        {'$push': {
+            'sub_category': sub_category
+        }}
+    )
+    if not sub.matched_count:
+        return jsonify({
+            'message': f"Category {category_name} not found",
+            'status': False
+        }), 404
+
+    return jsonify({
+        'message': 'Subcategory created successfully',
+        'status': False
+    }), 200
 
 
 @app.route(
