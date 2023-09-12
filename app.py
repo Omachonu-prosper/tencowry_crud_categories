@@ -223,16 +223,21 @@ def create_subcategory(category_name):
                     'status': False
                 }), 404
             
+            # If a subcategory cannot be found for deletion add that subcategory
+            # to the list of failed deletes
+            # Also add successful deletes to the array of successful deletes
             if sub.modified_count:
                 success_deletes.append(i)
             else:
                 failed_deletes.append(i)
 
+        # This logic is put in place to alert the client of the subcategories
+        # which have been deleted and those whose delete operations failed
         fail_message = f'Subcategories not deleted {failed_deletes}'
         fail_status_code = 207
         success_message = f'Deleted subcategories {success_deletes}'
         return jsonify({
-            'message': fail_message if len(fail_message) else success_message,
+            'message': fail_message if len(failed_deletes) else success_message,
             'failure': len(failed_deletes),
             'success': len(success_deletes),
             'total': len(sub_category)
