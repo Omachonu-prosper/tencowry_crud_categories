@@ -54,6 +54,8 @@ def get_create_categories():
             }), 400
         
         find_category = categories.find_one(
+            # Sanitize the input data received with title()
+            #   and strip() string methods
             {'category': category.strip().title()},
             {'_id': 1}
         )
@@ -64,6 +66,8 @@ def get_create_categories():
             }), 409
         
         payload = {
+            # Sanitize the input data received with title()
+            #   and strip() string methods
             'category': category.title().strip(),
             'sub_category': sub_category,
             'created_at': datetime.now()
@@ -93,50 +97,15 @@ def get_create_categories():
 
 @app.route('/categories/<string:category_name>',
         methods=['GET', 'PUT', 'DELETE'])
-def RUD_categories(category_name):
-    # The name RUD is gotten from CRUD just without a C
-    if request.method == 'PUT':
-        category = request.json.get('category', None)
-        sub_category = request.json.get('sub_category', None)
-        
-        if not sub_category:
-            return jsonify({
-                'message': 'Required payload ommited - no sub_category was given',
-                'status': False
-            }), 400
-        
-        new_sub_category = categories.update_one(
-             {'category': category_name.title().replace('_', ' ')},
-             {'$set': {
-                  'sub_category': sub_category
-             }}
-        )
-        if not new_sub_category.matched_count:
-            return jsonify({
-                'message': f"Category {category_name} not found",
-                'status': False
-            }), 400
-
-        if category:
-            update_category = categories.update_one(
-                {'category': category_name.title().replace('_', ' ')},
-                {'$set': {
-                    'category': category
-                }}
-            )
-            if not update_category.matched_count:
-                return jsonify({
-                    'message': f"Category {category_name} not found",
-                    'status': False
-                }),
-            
-        return jsonify({
-            'message': f"Category {category_name} updated successfully",
-            'status': True
-        }), 200
-
+def get_and_delete_category(category_name):
     if request.method == 'DELETE':
         category = categories.delete_one({
+            # We are comparing existing categories with the passed category by
+        #   setting it to a title case and replacing all underscores with
+        #   spaces so that the category name passed by the user as a dynamic
+        #   url parameter would match the category stored in the database
+        # For example a category name passed as home_&_accessories would be
+        #   mapped with a category of 'Home & accessories
             'category': category_name.title().replace('_', ' ')
         })
         if category.deleted_count:
@@ -151,6 +120,8 @@ def RUD_categories(category_name):
             }), 404
     
     category = categories.find_one(
+        # For any confusions please check the first instance this logic
+                #   (category_name.title().replace('_', ' ')) was used in this file
         {'category': category_name.title().replace('_', ' ')},
         {'_id': 0}
     )
@@ -185,6 +156,8 @@ def create_subcategory(category_name):
             }), 400
         
         sub = categories.update_one(
+            # For any confusions please check the first instance this logic
+                #   (category_name.title().replace('_', ' ')) was used in this file
             {'category': category_name.title().replace('_', ' ')},
             {'$push': {
                 'sub_category': sub_category.title()
@@ -212,6 +185,8 @@ def create_subcategory(category_name):
         failed_deletes = []
         for i in sub_category:
             sub = categories.update_one(
+                # For any confusions please check the first instance this logic
+                #   (category_name.title().replace('_', ' ')) was used in this file
                 {'category': category_name.title().replace('_', ' ')},
                 {'$pull': {
                     'sub_category': i.title()
@@ -242,15 +217,6 @@ def create_subcategory(category_name):
             'success': len(success_deletes),
             'total': len(sub_category)
         }), fail_status_code if len(failed_deletes) else 200
-
-
-
-@app.route(
-    '/categories/<string:category_name>/sub/<string:subcategory_name>',
-    methods=['PUT', 'DELETE']
-)
-def UD_subcategory(category_name, subcategory_name):
-    return 'under construction'
 
 
 @app.route('/')
