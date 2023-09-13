@@ -45,7 +45,7 @@ def get_create_categories():
         - Notify user on the status of the operation
         """
         category = request.json.get('category', None)
-        sub_category = request.json.get('sub_category', None)
+        sub_category = request.json.get('sub_category', [])
 
         if not category:
             return jsonify({
@@ -96,7 +96,7 @@ def get_create_categories():
         
 
 @app.route('/categories/<string:category_name>',
-        methods=['GET', 'PUT', 'DELETE'])
+        methods=['GET', 'DELETE'])
 def get_and_delete_category(category_name):
     if request.method == 'DELETE':
         category = categories.delete_one({
